@@ -20,24 +20,30 @@ export default function MessageList({
   messages,
   typing,
   group = false,
+  onForward,
 }: {
   messages: Message[];
   typing: boolean;
   group?: boolean;
+  onForward?: (m: Message) => void;
 }) {
   const contacts = useChatStore((s) => s.contacts);
+  const hidden = useChatStore((s) => s.hidden);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const visible = messages.filter((m) => !hidden[m.id]);
+  const byId = new Map(messages.map((m) => [m.id, m]));
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, typing]);
+  }, [visible.length, typing]);
 
   return (
     <div className="scroll-slim flex-1 overflow-y-auto px-6 py-5">
       <div className="mx-auto flex max-w-3xl flex-col gap-1.5">
-        {messages.map((m, i) => {
-          const prev = messages[i - 1];
-          const next = messages[i + 1];
+        {visible.map((m, i) => {
+          const prev = visible[i - 1];
+          const next = visible[i + 1];
           const mine = m.authorId === ME;
           const tail = !next || next.authorId !== m.authorId;
           const newDay = !prev || dayLabel(prev.ts) !== dayLabel(m.ts);
@@ -58,6 +64,8 @@ export default function MessageList({
                   mine={mine}
                   tail={tail}
                   author={group && !mine ? contacts[m.authorId] : undefined}
+                  repliedTo={m.replyTo ? byId.get(m.replyTo) : undefined}
+                  onForward={onForward}
                 />
               </div>
             </div>

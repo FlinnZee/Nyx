@@ -4,6 +4,8 @@ import type { ActiveCall, CallKind, CallLogEntry } from "../types";
 import { callLog as seedLog } from "../data/mock";
 import { uid } from "../lib/format";
 import { supabase } from "../lib/supabase";
+import { useUIStore } from "./useUIStore";
+import { fetchCalls, insertCall, subscribeCalls, toCall } from "../lib/chatApi";
 
 const ICE: RTCConfiguration = {
   iceServers: [
@@ -22,11 +24,13 @@ interface Signal {
 let pc: RTCPeerConnection | null = null;
 let personalCh: RealtimeChannel | null = null;
 let peerCh: RealtimeChannel | null = null;
+let callsCh: RealtimeChannel | null = null;
 let myId = "";
 let currentPeer = "";
 let pendingOffer: Signal | null = null;
 let pendingCandidates: RTCIceCandidateInit[] = [];
 let wasIncoming = false;
+let noAnswerTimer: ReturnType<typeof setTimeout> | null = null;
 
 interface CallState {
   active: ActiveCall | null;
@@ -45,7 +49,22 @@ interface CallState {
   toggleSpeaker: () => void;
 }
 
+function mediaError(e: unknown): string {
+  const name = e instanceof DOMException ? e.name : "";
+  if (name === "NotAllowedError") return "Camera / microphone permission is blocked.";
+  if (name === "NotFoundError" || name === "OverconstrainedError")
+    return "No microphone or camera was found on this device.";
+  if (name === "NotReadableError") return "Your camera or mic is already in use by another app.";
+  return "Couldn't access your microphone or camera.";
+}
+
 export const useCallStore = create<CallState>((set, get) => {
+  const toast = (m: string) => useUIStore.getState().showToast(m);
+
+  function addCall(entry: CallLogEntry) {
+    set((s) => (s.log.some((c) => c.id === entry.id) ? s : { log: [entry, ...s.log] }));
+  }
+
   async function peerChannel(peerId: string): Promise<RealtimeChannel | null> {
     if (!supabase) return null;
     if (peerCh && currentPeer === peerId) return peerCh;
@@ -62,12 +81,18 @@ export const useCallStore = create<CallState>((set, get) => {
     ch?.send({ type: "broadcast", event: "signal", payload: { ...sig, from: myId } });
   }
 
+  function clearNoAnswer() {
+    if (noAnswerTimer) clearTimeout(noAnswerTimer);
+    noAnswerTimer = null;
+  }
+
   function newPc(peerId: string): RTCPeerConnection {
     const conn = new RTCPeerConnection(ICE);
     conn.onicecandidate = (e) => {
       if (e.candidate) signal(peerId, { type: "ice", candidate: e.candidate.toJSON() });
     };
     conn.ontrack = (e) => {
+      clearNoAnswer();
       set((s) => ({
         remoteStream: e.streams[0] ?? s.remoteStream,
         active: s.active
@@ -75,17 +100,27 @@ export const useCallStore = create<CallState>((set, get) => {
           : s.active,
       }));
     };
+    conn.onconnectionstatechange = () => {
+      if (conn.connectionState === "failed") {
+        toast("Call couldn't connect on this network.");
+        get().end();
+      }
+    };
     return conn;
   }
 
+  /** Pick real, working audio/video. Verifies a mic actually produced a track. */
   async function getMedia(kind: CallKind): Promise<MediaStream> {
     try {
-      return await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: kind === "video",
-      });
-    } catch {
-      return navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true, video: kind === "video" });
+      if (s.getAudioTracks().length === 0) throw new DOMException("no audio", "NotFoundError");
+      return s;
+    } catch (e) {
+      if (kind === "video") {
+        // Camera might be busy — fall back to a voice-only stream.
+        return navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      }
+      throw e;
     }
   }
 
@@ -95,25 +130,28 @@ export const useCallStore = create<CallState>((set, get) => {
     pendingCandidates = [];
   }
 
-  function cleanup(logIt: boolean) {
+  function cleanup(declined: boolean, log = true) {
+    clearNoAnswer();
     const a = get().active;
-    if (logIt && a && a.startedAt) {
-      const entry: CallLogEntry = {
-        id: uid("call"),
-        contactId: a.contactId,
-        kind: a.kind,
-        direction: wasIncoming ? "incoming" : "outgoing",
-        ts: Date.now(),
-        duration: (Date.now() - a.startedAt) / 1000,
-      };
-      set((s) => ({ log: [entry, ...s.log] }));
-    } else if (logIt && a) {
-      set((s) => ({
-        log: [
-          { id: uid("call"), contactId: a.contactId, kind: a.kind, direction: "missed", ts: Date.now(), duration: 0 },
-          ...s.log,
-        ],
-      }));
+    // Only the caller writes the shared call record (avoids duplicates).
+    if (log && a && !wasIncoming) {
+      const status = a.startedAt ? "completed" : declined ? "declined" : "missed";
+      const duration = a.startedAt ? (Date.now() - a.startedAt) / 1000 : 0;
+      if (supabase && myId) {
+        insertCall(myId, a.contactId, a.kind, status, duration)
+          .then((e) => e && addCall(e))
+          .catch(() => {});
+      } else {
+        addCall({
+          id: uid("call"),
+          contactId: a.contactId,
+          kind: a.kind,
+          direction: status === "completed" ? "outgoing" : "missed",
+          status,
+          ts: Date.now(),
+          duration,
+        });
+      }
     }
     get().localStream?.getTracks().forEach((t) => t.stop());
     pc?.close();
@@ -161,9 +199,12 @@ export const useCallStore = create<CallState>((set, get) => {
         }
         break;
       }
-      case "end":
       case "decline":
+        toast("Call declined");
         cleanup(true);
+        break;
+      case "end":
+        cleanup(false);
         break;
     }
   }
@@ -182,38 +223,71 @@ export const useCallStore = create<CallState>((set, get) => {
         .channel(`rtc:${userId}`)
         .on("broadcast", { event: "signal" }, ({ payload }) => handleSignal(payload as Signal))
         .subscribe();
+
+      // Persistent call history.
+      fetchCalls(userId).then((log) => set({ log })).catch(() => {});
+      callsCh?.unsubscribe();
+      callsCh = subscribeCalls((row) => addCall(toCall(row as Parameters<typeof toCall>[0], userId)));
     },
 
     teardownSignaling: () => {
       cleanup(false);
-      if (personalCh && supabase) supabase.removeChannel(personalCh);
-      personalCh = null;
+      if (supabase) {
+        if (personalCh) supabase.removeChannel(personalCh);
+        if (callsCh) supabase.removeChannel(callsCh);
+      }
+      personalCh = callsCh = null;
       myId = "";
+      set({ log: seedLog });
     },
 
     start: async (contactId, kind) => {
       if (!supabase) return;
+      if (get().active) return;
       wasIncoming = false;
-      await peerChannel(contactId);
-      const stream = await getMedia(kind);
-      pc = newPc(contactId);
-      stream.getTracks().forEach((t) => pc!.addTrack(t, stream));
       set({
         active: { contactId, kind, status: "outgoing", muted: false, cameraOn: kind === "video", speakerOn: true },
-        localStream: stream,
+        localStream: null,
         remoteStream: null,
       });
+      let stream: MediaStream;
+      try {
+        stream = await getMedia(kind);
+      } catch (e) {
+        toast(mediaError(e));
+        cleanup(false, false);
+        return;
+      }
+      await peerChannel(contactId);
+      pc = newPc(contactId);
+      stream.getTracks().forEach((t) => pc!.addTrack(t, stream));
+      set({ localStream: stream });
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       signal(contactId, { type: "offer", kind, sdp: offer });
+
+      clearNoAnswer();
+      noAnswerTimer = setTimeout(() => {
+        if (get().active && get().active!.status !== "active") {
+          toast("No answer");
+          get().end();
+        }
+      }, 35000);
     },
 
     accept: async () => {
       const off = pendingOffer;
       if (!off || !supabase) return;
       const kind = off.kind ?? "voice";
+      let stream: MediaStream;
+      try {
+        stream = await getMedia(kind);
+      } catch (e) {
+        toast(mediaError(e));
+        get().decline();
+        return;
+      }
       await peerChannel(off.from);
-      const stream = await getMedia(kind);
       pc = newPc(off.from);
       stream.getTracks().forEach((t) => pc!.addTrack(t, stream));
       set((s) => ({
@@ -230,12 +304,12 @@ export const useCallStore = create<CallState>((set, get) => {
 
     decline: () => {
       if (pendingOffer) signal(pendingOffer.from, { type: "decline" });
-      cleanup(true);
+      cleanup(false);
     },
 
     end: () => {
       if (currentPeer) signal(currentPeer, { type: "end" });
-      cleanup(true);
+      cleanup(false);
     },
 
     toggleMute: () =>

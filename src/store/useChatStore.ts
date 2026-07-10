@@ -23,6 +23,7 @@ import { notifyMessage } from "../lib/notify";
 import { useUIStore } from "./useUIStore";
 import {
   createGroup,
+  deleteMessage,
   ensureConversation,
   fetchContacts,
   fetchConversationMeta,
@@ -43,6 +44,7 @@ import {
   urlToBlob,
   type MessageRow,
 } from "../lib/chatApi";
+import { getMedia } from "../lib/mediaCache";
 
 interface ChatState {
   live: boolean;
@@ -54,10 +56,17 @@ interface ChatState {
   activeId: string;
   drafts: Record<string, string>;
   typing: Record<string, boolean>;
+  replyTo: Record<string, Message | null>;
+  hidden: Record<string, true>;
   search: string;
 
   hydrate: (myId: string) => Promise<void>;
   teardown: () => void;
+
+  setReply: (cid: string, msg: Message | null) => void;
+  deleteForEveryone: (cid: string, msgId: string) => void;
+  hideForMe: (cid: string, msgId: string) => void;
+  forwardMessage: (msg: Message, targetCids: string[]) => Promise<void>;
 
   setActive: (id: string) => void;
   openWith: (contactId: string) => void;
@@ -86,6 +95,22 @@ const typingClear: Record<string, ReturnType<typeof setTimeout>> = {};
 let lastTypingSent = 0;
 
 const keyBy = (list: Contact[]) => Object.fromEntries(list.map((c) => [c.id, c]));
+
+const HIDDEN_KEY = "nyx.hidden";
+function loadHidden(): Record<string, true> {
+  try {
+    return JSON.parse(localStorage.getItem(HIDDEN_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+function saveHidden(h: Record<string, true>) {
+  try {
+    localStorage.setItem(HIDDEN_KEY, JSON.stringify(h));
+  } catch {
+    /* ignore */
+  }
+}
 
 function preview(m: Message): string {
   if (m.kind === "text") return m.text ?? "";
@@ -218,20 +243,21 @@ export const useChatStore = create<ChatState>((set, get) => {
 
   const onUpdated = (row: MessageRow) => {
     const myId = get().myId;
+    const mapped = toMessage(row, myId);
     set((s) => ({
       messages: {
         ...s.messages,
-        [row.conversation_id]: (s.messages[row.conversation_id] ?? []).map((m) =>
-          m.id === row.id
-            ? {
-                ...toMessage(row, myId),
-                // Never lose a locally-cached media reference.
-                attachment: m.attachment ?? toMessage(row, myId).attachment,
-                voice: m.voice ?? toMessage(row, myId).voice,
-                reactions: m.reactions,
-              }
-            : m,
-        ),
+        [row.conversation_id]: (s.messages[row.conversation_id] ?? []).map((m) => {
+          if (m.id !== row.id) return m;
+          if (mapped.deleted) return mapped; // full tombstone, drop media & reactions
+          return {
+            ...mapped,
+            // Never lose a locally-cached media reference.
+            attachment: m.attachment ?? mapped.attachment,
+            voice: m.voice ?? mapped.voice,
+            reactions: m.reactions,
+          };
+        }),
       },
     }));
   };
@@ -246,6 +272,8 @@ export const useChatStore = create<ChatState>((set, get) => {
     activeId: seedConversations[0].id,
     drafts: {},
     typing: {},
+    replyTo: {},
+    hidden: loadHidden(),
     search: "",
 
     hydrate: async (myId) => {
@@ -456,10 +484,11 @@ export const useChatStore = create<ChatState>((set, get) => {
     sendText: (id) => {
       const text = (get().drafts[id] ?? "").trim();
       if (!text) return;
-      set((s) => ({ drafts: { ...s.drafts, [id]: "" } }));
+      const replyId = get().replyTo[id]?.id;
+      set((s) => ({ drafts: { ...s.drafts, [id]: "" }, replyTo: { ...s.replyTo, [id]: null } }));
       if (get().live) {
         playSend();
-        insertMessage(id, get().myId, { kind: "text", body: text })
+        insertMessage(id, get().myId, { kind: "text", body: text, replyTo: replyId })
           .then((msg) => msg && addLocal(id, msg))
           .catch(() => useUIStore.getState().showToast("Message didn't send"));
         return;
@@ -472,6 +501,7 @@ export const useChatStore = create<ChatState>((set, get) => {
         text,
         ts: Date.now(),
         status: "sending",
+        replyTo: replyId,
       });
     },
 
@@ -557,6 +587,92 @@ export const useChatStore = create<ChatState>((set, get) => {
           }),
         },
       })),
+
+    setReply: (cid, msg) => set((s) => ({ replyTo: { ...s.replyTo, [cid]: msg } })),
+
+    deleteForEveryone: (cid, msgId) => {
+      set((s) => ({
+        messages: {
+          ...s.messages,
+          [cid]: (s.messages[cid] ?? []).map((m) =>
+            m.id === msgId
+              ? { ...m, deleted: true, text: undefined, attachment: undefined, voice: undefined, reactions: undefined }
+              : m,
+          ),
+        },
+      }));
+      if (get().live) {
+        deleteMessage(msgId).catch(() => useUIStore.getState().showToast("Couldn't delete"));
+      }
+    },
+
+    hideForMe: (_cid, msgId) =>
+      set((s) => {
+        const hidden = { ...s.hidden, [msgId]: true as const };
+        saveHidden(hidden);
+        return { hidden };
+      }),
+
+    forwardMessage: async (msg, targetCids) => {
+      const myId = get().myId;
+      for (const cid of targetCids) {
+        try {
+          if (!get().live) {
+            deliverDemo(cid, {
+              id: uid(cid),
+              conversationId: cid,
+              authorId: ME,
+              kind: msg.kind,
+              text: msg.text,
+              attachment: msg.attachment,
+              voice: msg.voice,
+              ts: Date.now(),
+              status: "sending",
+            });
+            continue;
+          }
+          if (msg.kind === "text") {
+            const m = await insertMessage(cid, myId, { kind: "text", body: msg.text });
+            if (m) addLocal(cid, m);
+            continue;
+          }
+          let blob = await getMedia(msg.id).catch(() => null);
+          const url = msg.attachment?.url ?? msg.voice?.url;
+          if (!blob && url) blob = await urlToBlob(url).catch(() => null);
+          if (!blob) {
+            useUIStore.getState().showToast("Can't forward that media");
+            continue;
+          }
+          if (msg.kind === "voice") {
+            const up = await uploadMedia(myId, blob, "webm");
+            const m = await insertMessage(cid, myId, {
+              kind: "voice",
+              voice: { ...(msg.voice ?? { duration: 0, peaks: [] }), url: up.url, path: up.path },
+            });
+            if (m) {
+              await saveMedia(m.id, blob).catch(() => {});
+              addLocal(cid, m);
+            }
+          } else {
+            const att = msg.attachment ?? { name: "file", size: blob.size, mime: blob.type };
+            const ext = (att.name.split(".").pop() || att.mime.split("/")[1] || "bin").toLowerCase();
+            const up = await uploadMedia(myId, blob, ext);
+            const m = await insertMessage(cid, myId, {
+              kind: msg.kind,
+              attachment: { ...att, url: up.url, path: up.path },
+            });
+            if (m) {
+              await saveMedia(m.id, blob).catch(() => {});
+              addLocal(cid, m);
+            }
+          }
+        } catch (e) {
+          console.error("forward failed", e);
+          useUIStore.getState().showToast("Couldn't forward");
+        }
+      }
+      useUIStore.getState().showToast(`Forwarded to ${targetCids.length} chat${targetCids.length > 1 ? "s" : ""}`);
+    },
 
     searchHandle: async (handle) => {
       return findByHandle(handle);

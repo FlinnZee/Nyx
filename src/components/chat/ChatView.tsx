@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { motion } from "motion/react";
 import type { Message } from "../../types";
 import { useChatStore } from "../../store/useChatStore";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import Composer from "./Composer";
+import ForwardModal from "./ForwardModal";
 import NyxLogo from "../NyxLogo";
 
 // Stable reference so the selector never returns a fresh array (would loop).
@@ -19,6 +21,7 @@ export default function ChatView() {
   );
   const messages = useChatStore((s) => s.messages[s.activeId]) ?? EMPTY;
   const typing = useChatStore((s) => !!s.typing[s.activeId]);
+  const [forwarding, setForwarding] = useState<Message | null>(null);
 
   if (!conversation || (!contact && !conversation.isGroup)) {
     return (
@@ -46,8 +49,10 @@ export default function ChatView() {
         messages={messages}
         typing={typing}
         group={!!conversation.isGroup}
+        onForward={setForwarding}
       />
       <Composer convId={activeId} />
+      <ForwardModal message={forwarding} onClose={() => setForwarding(null)} />
     </section>
   );
 }

@@ -2,6 +2,19 @@
 
 All notable changes to Nyx.
 
+## 0.3.1 · 2026-07-10
+
+### Added
+- Reply to a specific message, with a quoted preview
+- Forward messages to one or more chats
+- Delete for me & delete for everyone
+- Persistent call history (survives restarts) with missed / declined states
+- In-app "update available" banner so you always know when a new build ships
+
+### Fixed
+- Call list no longer resets when the app restarts
+- Clearer errors when a mic/camera is blocked, missing or busy; calls now time out on no-answer
+
 ## 0.3.0 — Private Circles · 2026-07-10
 
 The first public release.

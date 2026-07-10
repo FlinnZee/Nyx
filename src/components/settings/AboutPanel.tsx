@@ -36,7 +36,7 @@ export default function AboutPanel() {
       <div className="glass flex flex-col items-center rounded-3xl px-6 py-8 text-center">
         <NyxLogo size={54} />
         <h3 className="aurora-text mt-4 font-display text-3xl font-bold">Nyx</h3>
-        <p className="mt-1 text-sm text-muted">Version 0.3.0 — private circles</p>
+        <p className="mt-1 text-sm text-muted">Version 0.3.1 — private circles</p>
         <p className="mt-3 max-w-xs text-sm text-muted">A fluid, futuristic messaging experience — night made social.</p>
       </div>
 

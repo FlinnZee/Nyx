@@ -7,6 +7,8 @@ import {
   Mic,
   Trash2,
   Camera,
+  Reply,
+  X,
   Image as ImageIcon,
   File as FileIcon,
 } from "lucide-react";
@@ -14,6 +16,7 @@ import { useChatStore } from "../../store/useChatStore";
 import { useSettingsStore } from "../../store/useSettingsStore";
 import { useVoiceRecorder } from "../../hooks/useVoiceRecorder";
 import { duration as fmtDur } from "../../lib/format";
+import { ME } from "../../data/mock";
 import EmojiPicker from "./EmojiPicker";
 import Waveform from "./Waveform";
 import CameraCapture from "./CameraCapture";
@@ -24,6 +27,9 @@ export default function Composer({ convId }: { convId: string }) {
   const sendText = useChatStore((s) => s.sendText);
   const sendAttachment = useChatStore((s) => s.sendAttachment);
   const sendVoice = useChatStore((s) => s.sendVoice);
+  const replying = useChatStore((s) => s.replyTo[convId]);
+  const setReply = useChatStore((s) => s.setReply);
+  const contacts = useChatStore((s) => s.contacts);
   const enterToSend = useSettingsStore((s) => s.prefs.enterToSend);
 
   const rec = useVoiceRecorder();
@@ -66,9 +72,49 @@ export default function Composer({ convId }: { convId: string }) {
     if (clip) sendVoice(convId, clip);
   };
 
+  const replyName = replying
+    ? replying.authorId === ME
+      ? "yourself"
+      : contacts[replying.authorId]?.name ?? "message"
+    : "";
+  const replySnippet = replying
+    ? replying.kind === "text"
+      ? replying.text ?? ""
+      : replying.kind === "image"
+        ? "📷 Photo"
+        : replying.kind === "voice"
+          ? "🎙️ Voice message"
+          : `📎 ${replying.attachment?.name ?? "File"}`
+    : "";
+
   return (
     <div className="px-6 pb-5 pt-2">
       <div className="relative mx-auto max-w-3xl">
+        <AnimatePresence>
+          {replying && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-2 flex items-center gap-3 rounded-xl border-l-2 border-accent bg-white/[0.04] px-3 py-2"
+            >
+              <Reply size={15} className="shrink-0 text-accent" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[12px] font-medium text-accent">Replying to {replyName}</div>
+                <div className="truncate text-[12px] text-muted">{replySnippet}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReply(convId, null)}
+                aria-label="Cancel reply"
+                className="grid h-7 w-7 place-items-center rounded-lg text-muted hover:bg-white/10 hover:text-text"
+              >
+                <X size={15} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <AnimatePresence>
           {emoji && (
             <EmojiPicker onPick={(e) => setDraft(convId, draft + e)} />

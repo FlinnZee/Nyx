@@ -12,6 +12,7 @@ import ProfileScreen from "./components/profile/ProfileScreen";
 import CallOverlay from "./components/calls/CallOverlay";
 import Splash from "./components/Splash";
 import Toast from "./components/ui/Toast";
+import UpdateBanner from "./components/UpdateBanner";
 import AuthScreen from "./components/auth/AuthScreen";
 import InviteGate from "./components/auth/InviteGate";
 import AuthLoading from "./components/auth/AuthLoading";
@@ -116,6 +117,7 @@ export default function App() {
       <div className="relative flex h-screen flex-col overflow-hidden text-text">
         <AuroraBackground />
         <TitleBar />
+        <UpdateBanner />
         <Gate />
         <CallOverlay />
         <Toast />

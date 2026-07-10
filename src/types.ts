@@ -55,6 +55,10 @@ export interface Message {
   ts: number;
   status?: MessageStatus;
   reactions?: string[];
+  /** Id of the message this one replies to. */
+  replyTo?: string;
+  /** Deleted for everyone (tombstone). */
+  deleted?: boolean;
 }
 
 export interface Conversation {
@@ -71,12 +75,14 @@ export interface Conversation {
 
 export type CallKind = "voice" | "video";
 export type CallDirection = "incoming" | "outgoing" | "missed";
+export type CallStatusKind = "completed" | "missed" | "declined";
 
 export interface CallLogEntry {
   id: string;
   contactId: string;
   kind: CallKind;
   direction: CallDirection;
+  status?: CallStatusKind;
   ts: number;
   duration: number;
 }

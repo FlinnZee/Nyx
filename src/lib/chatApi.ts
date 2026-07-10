@@ -1,6 +1,7 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type {
   Attachment,
+  CallLogEntry,
   Contact,
   Conversation,
   FriendRequest,
@@ -41,6 +42,18 @@ export interface MessageRow {
   created_at: string;
   delivered_at: string | null;
   read_at: string | null;
+  reply_to: string | null;
+  deleted: boolean | null;
+}
+
+interface CallRow {
+  id: string;
+  from_id: string;
+  to_id: string;
+  kind: string;
+  status: string;
+  duration: number;
+  created_at: string;
 }
 
 interface RequestRow {
@@ -85,7 +98,63 @@ export function toMessage(row: MessageRow, myId: string): Message {
           ? "delivered"
           : "sent"
       : undefined,
+    replyTo: row.reply_to ?? undefined,
+    deleted: row.deleted ?? undefined,
   };
+}
+
+export function toCall(row: CallRow, myId: string): CallLogEntry {
+  const outgoing = row.from_id === myId;
+  const status = row.status as "completed" | "missed" | "declined";
+  return {
+    id: row.id,
+    contactId: outgoing ? row.to_id : row.from_id,
+    kind: row.kind as "voice" | "video",
+    direction: status === "missed" || status === "declined" ? "missed" : outgoing ? "outgoing" : "incoming",
+    status,
+    ts: new Date(row.created_at).getTime(),
+    duration: row.duration,
+  };
+}
+
+export async function fetchCalls(myId: string): Promise<CallLogEntry[]> {
+  const { data } = await sb()
+    .from("calls")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  return ((data ?? []) as CallRow[]).map((r) => toCall(r, myId));
+}
+
+export async function insertCall(
+  myId: string,
+  toId: string,
+  kind: "voice" | "video",
+  status: "completed" | "missed" | "declined",
+  duration: number,
+): Promise<CallLogEntry | null> {
+  const { data } = await sb()
+    .from("calls")
+    .insert({ from_id: myId, to_id: toId, kind, status, duration: Math.round(duration) })
+    .select()
+    .single();
+  return data ? toCall(data as CallRow, myId) : null;
+}
+
+export function subscribeCalls(onInsert: (row: unknown) => void): RealtimeChannel {
+  return sb()
+    .channel("db:calls")
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "calls" },
+      (payload) => onInsert(payload.new),
+    )
+    .subscribe();
+}
+
+export async function deleteMessage(id: string): Promise<void> {
+  const { error } = await sb().rpc("delete_message", { p_id: id });
+  if (error) throw error;
 }
 
 /* ------------------------------ profiles ------------------------------- */
@@ -320,6 +389,7 @@ interface InsertPayload {
   body?: string;
   attachment?: Attachment;
   voice?: VoiceClip;
+  replyTo?: string;
 }
 
 export async function insertMessage(
@@ -336,6 +406,7 @@ export async function insertMessage(
       body: p.body ?? null,
       attachment: p.attachment ?? null,
       voice: p.voice ?? null,
+      reply_to: p.replyTo ?? null,
     })
     .select()
     .single();

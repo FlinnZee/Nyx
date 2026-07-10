@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Check,
@@ -7,33 +7,60 @@ import {
   Download,
   FileText,
   ImageOff,
+  Ban,
+  MoreVertical,
+  Reply,
+  Forward,
+  Copy,
+  Trash2,
   SmilePlus,
 } from "lucide-react";
 import type { Contact, Message } from "../../types";
 import { clock, fileSize } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import { useChatStore } from "../../store/useChatStore";
+import { useUIStore } from "../../store/useUIStore";
+import { ME } from "../../data/mock";
 import { useCachedMedia } from "../../hooks/useCachedMedia";
 import VoiceMessage from "./VoiceMessage";
 import Modal from "../ui/Modal";
 
 const QUICK = ["❤️", "😂", "👍", "🔥", "😮", "😢"];
 
+function snippet(m: Message): string {
+  if (m.deleted) return "Deleted message";
+  if (m.kind === "text") return m.text ?? "";
+  if (m.kind === "image") return "📷 Photo";
+  if (m.kind === "voice") return "🎙️ Voice message";
+  if (m.kind === "file") return `📎 ${m.attachment?.name ?? "File"}`;
+  return "Message";
+}
+
 export default function MessageBubble({
   message,
   mine,
   tail,
   author,
+  repliedTo,
+  onForward,
 }: {
   message: Message;
   mine: boolean;
   tail: boolean;
-  /** Shown above the bubble in group chats. */
   author?: Contact;
+  repliedTo?: Message;
+  onForward?: (m: Message) => void;
 }) {
   const react = useChatStore((s) => s.react);
+  const setReply = useChatStore((s) => s.setReply);
+  const deleteForEveryone = useChatStore((s) => s.deleteForEveryone);
+  const hideForMe = useChatStore((s) => s.hideForMe);
+  const contacts = useChatStore((s) => s.contacts);
+  const showToast = useUIStore((s) => s.showToast);
+
   const [lightbox, setLightbox] = useState(false);
   const [bar, setBar] = useState(false);
+  const [menu, setMenu] = useState(false);
   const isImage = message.kind === "image";
   const media = useCachedMedia(message);
 
@@ -41,6 +68,19 @@ export default function MessageBubble({
     react(message.conversationId, message.id, emoji);
     setBar(false);
   };
+
+  if (message.deleted) {
+    return (
+      <div className={cn("flex w-full", mine ? "justify-end" : "justify-start")}>
+        <div className="flex max-w-[74%] items-center gap-2 rounded-[var(--radius-bubble)] border border-dashed border-line px-3.5 py-2.5 text-[13px] italic text-faint">
+          <Ban size={14} /> This message was deleted
+        </div>
+      </div>
+    );
+  }
+
+  const replyAuthor =
+    repliedTo && (repliedTo.authorId === ME ? "You" : contacts[repliedTo.authorId]?.name ?? "Unknown");
 
   return (
     <motion.div
@@ -52,10 +92,7 @@ export default function MessageBubble({
     >
       <div className={cn("flex max-w-[74%] flex-col", mine ? "items-end" : "items-start")}>
         {author && !mine && (
-          <span
-            className="mb-0.5 pl-1 text-[11px] font-medium"
-            style={{ color: `hsl(${author.hue} 80% 70%)` }}
-          >
+          <span className="mb-0.5 pl-1 text-[11px] font-medium" style={{ color: `hsl(${author.hue} 80% 70%)` }}>
             {author.name}
           </span>
         )}
@@ -64,16 +101,12 @@ export default function MessageBubble({
           <div
             className={cn(
               "relative text-[14px] leading-relaxed",
-              isImage ? "overflow-hidden p-1" : "px-3.5 py-2.5",
+              isImage && !repliedTo ? "overflow-hidden p-1" : "px-3.5 py-2.5",
               mine ? "text-white" : "glass text-text",
             )}
             style={{
               borderRadius: "var(--radius-bubble)",
-              ...(tail
-                ? mine
-                  ? { borderBottomRightRadius: 6 }
-                  : { borderBottomLeftRadius: 6 }
-                : {}),
+              ...(tail ? (mine ? { borderBottomRightRadius: 6 } : { borderBottomLeftRadius: 6 }) : {}),
               ...(mine
                 ? {
                     background:
@@ -83,6 +116,18 @@ export default function MessageBubble({
                 : {}),
             }}
           >
+            {repliedTo && (
+              <div
+                className={cn(
+                  "mb-1.5 rounded-lg border-l-2 px-2.5 py-1.5 text-[12px]",
+                  mine ? "bg-black/15 border-white/60" : "bg-white/[0.05] border-accent",
+                )}
+              >
+                <div className={cn("font-medium", mine ? "text-white/90" : "text-accent")}>{replyAuthor}</div>
+                <div className={cn("truncate", mine ? "text-white/70" : "text-muted")}>{snippet(repliedTo)}</div>
+              </div>
+            )}
+
             {message.kind === "text" && (
               <span className="select-text whitespace-pre-wrap break-words">{message.text}</span>
             )}
@@ -120,10 +165,7 @@ export default function MessageBubble({
                     href={media}
                     download={message.attachment.name}
                     aria-label="Download"
-                    className={cn(
-                      "ml-2 grid h-8 w-8 shrink-0 place-items-center rounded-lg",
-                      mine ? "hover:bg-white/20" : "hover:bg-white/10",
-                    )}
+                    className={cn("ml-2 grid h-8 w-8 shrink-0 place-items-center rounded-lg", mine ? "hover:bg-white/20" : "hover:bg-white/10")}
                   >
                     <Download size={16} />
                   </a>
@@ -141,35 +183,41 @@ export default function MessageBubble({
               </div>
             )}
 
-            {isImage && media ? (
-              <span className="pointer-events-none absolute bottom-2.5 right-2.5 flex items-center gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[10px] text-white/90 backdrop-blur-sm">
-                {clock(message.ts)}
-                {mine && <StatusTick status={message.status} />}
-              </span>
-            ) : (
-              <span
-                className={cn(
-                  "float-right ml-2 mt-1.5 flex translate-y-0.5 items-center gap-1 text-[10px]",
-                  mine ? "text-white/60" : "text-faint",
-                )}
-              >
-                {clock(message.ts)}
-                {mine && <StatusTick status={message.status} />}
-              </span>
-            )}
+            <span
+              className={cn(
+                "float-right ml-2 mt-1.5 flex translate-y-0.5 items-center gap-1 text-[10px]",
+                mine ? "text-white/60" : "text-faint",
+              )}
+            >
+              {clock(message.ts)}
+              {mine && <StatusTick status={message.status} />}
+            </span>
           </div>
 
-          <button
-            type="button"
-            aria-label="React"
-            onClick={() => setBar((v) => !v)}
+          {/* Hover actions */}
+          <div
             className={cn(
-              "absolute top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-line bg-surface/90 text-muted opacity-0 backdrop-blur transition-opacity hover:text-text group-hover:opacity-100",
-              mine ? "-left-9" : "-right-9",
+              "absolute top-1/2 flex -translate-y-1/2 gap-1 opacity-0 transition-opacity group-hover:opacity-100",
+              mine ? "-left-[68px]" : "-right-[68px]",
             )}
           >
-            <SmilePlus size={15} />
-          </button>
+            <button
+              type="button"
+              aria-label="React"
+              onClick={() => { setBar((v) => !v); setMenu(false); }}
+              className="grid h-7 w-7 place-items-center rounded-full border border-line bg-surface/90 text-muted backdrop-blur hover:text-text"
+            >
+              <SmilePlus size={15} />
+            </button>
+            <button
+              type="button"
+              aria-label="More"
+              onClick={() => { setMenu((v) => !v); setBar(false); }}
+              className="grid h-7 w-7 place-items-center rounded-full border border-line bg-surface/90 text-muted backdrop-blur hover:text-text"
+            >
+              <MoreVertical size={15} />
+            </button>
+          </div>
 
           <AnimatePresence>
             {bar && (
@@ -180,21 +228,38 @@ export default function MessageBubble({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.9 }}
                   transition={{ type: "spring", stiffness: 500, damping: 26 }}
-                  className={cn(
-                    "glass-panel absolute bottom-full z-20 mb-2 flex gap-1 rounded-full p-1.5",
-                    mine ? "right-0" : "left-0",
-                  )}
+                  className={cn("glass-panel absolute bottom-full z-20 mb-2 flex gap-1 rounded-full p-1.5", mine ? "right-0" : "left-0")}
                 >
                   {QUICK.map((e) => (
-                    <button
-                      key={e}
-                      type="button"
-                      onClick={() => addReaction(e)}
-                      className="grid h-8 w-8 place-items-center rounded-full text-lg transition-transform hover:scale-125 hover:bg-white/10"
-                    >
+                    <button key={e} type="button" onClick={() => addReaction(e)} className="grid h-8 w-8 place-items-center rounded-full text-lg transition-transform hover:scale-125 hover:bg-white/10">
                       {e}
                     </button>
                   ))}
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {menu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setMenu(false)} />
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.94 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.94 }}
+                  transition={{ type: "spring", stiffness: 480, damping: 28 }}
+                  className={cn("glass-panel absolute bottom-full z-20 mb-2 w-44 rounded-2xl p-1.5", mine ? "right-0" : "left-0")}
+                >
+                  <MenuRow icon={<Reply size={15} />} label="Reply" onClick={() => { setReply(message.conversationId, message); setMenu(false); }} />
+                  <MenuRow icon={<Forward size={15} />} label="Forward" onClick={() => { onForward?.(message); setMenu(false); }} />
+                  {message.kind === "text" && (
+                    <MenuRow icon={<Copy size={15} />} label="Copy" onClick={() => { navigator.clipboard?.writeText(message.text ?? ""); showToast("Copied"); setMenu(false); }} />
+                  )}
+                  <MenuRow icon={<Trash2 size={15} />} label="Delete for me" onClick={() => { hideForMe(message.conversationId, message.id); setMenu(false); }} />
+                  {mine && (
+                    <MenuRow danger icon={<Trash2 size={15} />} label="Delete for everyone" onClick={() => { deleteForEveryone(message.conversationId, message.id); setMenu(false); }} />
+                  )}
                 </motion.div>
               </>
             )}
@@ -223,6 +288,32 @@ export default function MessageBubble({
         </Modal>
       )}
     </motion.div>
+  );
+}
+
+function MenuRow({
+  icon,
+  label,
+  onClick,
+  danger,
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] transition-colors",
+        danger ? "text-red-400 hover:bg-red-500/10" : "text-muted hover:bg-white/[0.06] hover:text-text",
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
 
