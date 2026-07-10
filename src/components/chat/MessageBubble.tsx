@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useRef, useState, type ReactNode } from "react";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "motion/react";
 import {
   Check,
   CheckCheck,
@@ -20,10 +20,13 @@ import { clock, fileSize } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import { useChatStore } from "../../store/useChatStore";
 import { useUIStore } from "../../store/useUIStore";
-import { tapHaptic } from "../../lib/haptics";
+import { tapHaptic, confirmHaptic } from "../../lib/haptics";
 import { ME } from "../../data/mock";
 import { useCachedMedia } from "../../hooks/useCachedMedia";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { useLongPress } from "../../hooks/useLongPress";
 import VoiceMessage from "./VoiceMessage";
+import MessageActionSheet from "./MessageActionSheet";
 import Modal from "../ui/Modal";
 
 const QUICK = ["❤️", "😂", "👍", "🔥", "😮", "😢"];
@@ -62,8 +65,20 @@ export default function MessageBubble({
   const [lightbox, setLightbox] = useState(false);
   const [bar, setBar] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [sheet, setSheet] = useState(false);
   const isImage = message.kind === "image";
   const media = useCachedMedia(message);
+  const mobile = useIsMobile();
+
+  // Touch: long-press opens the action sheet; a swipe to the right replies.
+  const lpFired = useRef(false);
+  const lp = useLongPress(() => {
+    lpFired.current = true;
+    confirmHaptic();
+    setSheet(true);
+  });
+  const dragX = useMotionValue(0);
+  const replyHint = useTransform(dragX, [16, 64], [0, 1]);
 
   const addReaction = (emoji: string) => {
     tapHaptic();
@@ -99,7 +114,38 @@ export default function MessageBubble({
           </span>
         )}
 
-        <div className="relative" onDoubleClick={() => addReaction("❤️")}>
+        <motion.div
+          className="relative"
+          onDoubleClick={mobile ? undefined : () => addReaction("❤️")}
+          drag={mobile ? "x" : false}
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={{ left: 0, right: 0.24 }}
+          dragDirectionLock
+          style={{ x: dragX }}
+          onDragEnd={(_, info) => {
+            if (info.offset.x > 56) {
+              confirmHaptic();
+              setReply(message.conversationId, message);
+            }
+          }}
+          {...lp}
+          onClickCapture={(e) => {
+            if (lpFired.current) {
+              lpFired.current = false;
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }}
+        >
+          {/* Swipe-to-reply hint */}
+          {mobile && (
+            <motion.span
+              className="absolute -left-9 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-line bg-surface/90 text-accent"
+              style={{ opacity: replyHint }}
+            >
+              <Reply size={14} />
+            </motion.span>
+          )}
           <div
             className={cn(
               "relative text-[14px] leading-relaxed",
@@ -196,10 +242,10 @@ export default function MessageBubble({
             </span>
           </div>
 
-          {/* Hover actions */}
+          {/* Hover actions (desktop; touch uses long-press) */}
           <div
             className={cn(
-              "absolute top-1/2 flex -translate-y-1/2 gap-1 opacity-0 transition-opacity group-hover:opacity-100",
+              "absolute top-1/2 hidden -translate-y-1/2 gap-1 opacity-0 transition-opacity group-hover:opacity-100 md:flex",
               mine ? "-left-[68px]" : "-right-[68px]",
             )}
           >
@@ -266,7 +312,7 @@ export default function MessageBubble({
               </>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         {message.reactions && message.reactions.length > 0 && (
           <div className={cn("-mt-1 flex flex-wrap gap-1", mine ? "justify-end pr-1" : "pl-1")}>
@@ -289,6 +335,12 @@ export default function MessageBubble({
           <img src={media} alt={message.attachment?.name ?? "photo"} className="w-full rounded-xl" />
         </Modal>
       )}
+
+      <MessageActionSheet
+        message={sheet ? message : null}
+        onClose={() => setSheet(false)}
+        onForward={(m) => onForward?.(m)}
+      />
     </motion.div>
   );
 }

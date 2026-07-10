@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.webkit.WebView
 import androidx.activity.enableEdgeToEdge
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -14,6 +15,24 @@ class MainActivity : TauriActivity() {
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
     requestNeededPermissions()
+  }
+
+  /**
+   * Make the WebView behave like an app, not a desktop site: honour the
+   * page's viewport meta (device-width) and disable pinch zoom.
+   */
+  override fun onWebViewCreate(webView: WebView) {
+    webView.settings.apply {
+      useWideViewPort = true
+      loadWithOverviewMode = true
+      setSupportZoom(false)
+      builtInZoomControls = false
+      displayZoomControls = false
+      textZoom = 100
+    }
+    webView.isVerticalScrollBarEnabled = false
+    webView.isHorizontalScrollBarEnabled = false
+    webView.overScrollMode = WebView.OVER_SCROLL_NEVER
   }
 
   /**
