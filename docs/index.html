@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en" data-theme="aurora">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nyx — night made social</title>
+<meta name="description" content="Nyx is a fluid, futuristic messaging experience. Private circles, device-side media, real calls — wrapped in living aurora light. Windows today, mobile soon." />
+<meta property="og:title" content="Nyx — night made social" />
+<meta property="og:description" content="A fluid, futuristic messaging experience by TK NiRMAL (dr.v0id)." />
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Orbitron:wght@500;700&family=Comfortaa:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#07070d; --surface:#0f0f1c; --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.16);
+    --text:#ececf5; --muted:#9a9ab4; --faint:#61617e;
+    --c1:#3ce7ff; --c2:#8b5cf6; --c3:#ff5fa2; --accent:#8b7bff; --online:#35e6ae;
+    --display:"Space Grotesk",Inter,system-ui,sans-serif; --sans:Inter,system-ui,sans-serif;
+    --rb:18px;
+  }
+  [data-theme="vortex"]{
+    --ink:#030807; --surface:#071510; --line:rgba(0,255,159,.13); --line-strong:rgba(0,255,159,.3);
+    --text:#e8fff5; --muted:#8fb8a8; --faint:#56776a;
+    --c1:#00ff9f; --c2:#00cfff; --c3:#ff2d78; --accent:#00ff9f; --online:#39ff14;
+    --display:"Orbitron","Space Grotesk",sans-serif; --rb:8px;
+  }
+  [data-theme="bloom"]{
+    --ink:#171019; --surface:#241826; --line:rgba(255,190,220,.14); --line-strong:rgba(255,190,220,.3);
+    --text:#fdf0f7; --muted:#c3a3b6; --faint:#8a6d80;
+    --c1:#ff9ecb; --c2:#c9a2ff; --c3:#ffc998; --accent:#ff8fc4; --online:#7ef0c3;
+    --display:"Comfortaa","Space Grotesk",sans-serif; --rb:26px;
+  }
+  *{box-sizing:border-box;margin:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--sans);background:var(--ink);color:var(--text);overflow-x:hidden;transition:background .5s}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:color-mix(in srgb,var(--c2) 45%,transparent);color:#fff}
+  .display{font-family:var(--display)}
+  .aurora-text{background:linear-gradient(100deg,var(--c1),var(--c2) 45%,var(--c3));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* ---------- living backdrop ---------- */
+  .bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--ink);transition:background .5s}
+  .blob{position:absolute;border-radius:50%;filter:blur(110px);opacity:.55;transition:background .6s}
+  .b1{width:64vh;height:64vh;left:-14%;top:-18%;background:radial-gradient(circle,color-mix(in srgb,var(--c2) 55%,transparent),transparent 60%);animation:drift1 22s ease-in-out infinite}
+  .b2{width:54vh;height:54vh;right:-10%;top:6%;background:radial-gradient(circle,color-mix(in srgb,var(--c1) 42%,transparent),transparent 60%);animation:drift2 28s ease-in-out infinite}
+  .b3{width:60vh;height:60vh;left:28%;bottom:-22%;background:radial-gradient(circle,color-mix(in srgb,var(--c3) 40%,transparent),transparent 60%);animation:drift3 25s ease-in-out infinite}
+  @keyframes drift1{0%,100%{transform:translate(-8%,-6%) scale(1)}50%{transform:translate(10%,8%) scale(1.25)}}
+  @keyframes drift2{0%,100%{transform:translate(6%,4%) scale(1.1)}50%{transform:translate(-12%,-10%) scale(.9)}}
+  @keyframes drift3{0%,100%{transform:translate(0,10%) scale(1)}50%{transform:translate(8%,-8%) scale(1.2)}}
+  .grid-floor{position:absolute;left:-30%;right:-30%;bottom:-12%;height:58vh;display:none;
+    background-image:linear-gradient(color-mix(in srgb,var(--c1) 18%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--c1) 18%,transparent) 1px,transparent 1px);
+    background-size:46px 46px;transform:perspective(480px) rotateX(62deg);transform-origin:50% 100%;
+    -webkit-mask-image:linear-gradient(to top,#000 30%,transparent 95%);mask-image:linear-gradient(to top,#000 30%,transparent 95%);
+    animation:gridscroll 1.6s linear infinite}
+  [data-theme="vortex"] .grid-floor{display:block}
+  @keyframes gridscroll{to{background-position:0 46px}}
+  .glow{position:absolute;inset:0;pointer-events:none}
+  .vignette{position:absolute;inset:0;background:radial-gradient(120% 120% at 50% 0%,transparent 55%,rgba(4,4,9,.85) 100%)}
+
+  /* ---------- crescent logo ---------- */
+  .moon{position:relative;display:inline-block;flex:none}
+  .moon i{position:absolute;inset:0;display:block;background:linear-gradient(135deg,var(--c1),var(--c2) 50%,var(--c3));
+    -webkit-mask:url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"%3E%3Cpath fill="%23fff" d="M22.63 4.04A20 20 0 1 0 40.97 34.6A18 18 0 0 1 22.63 4.04Z"/%3E%3C/svg%3E') no-repeat 0 0/100% 100%;
+    mask:url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"%3E%3Cpath fill="%23fff" d="M22.63 4.04A20 20 0 1 0 40.97 34.6A18 18 0 0 1 22.63 4.04Z"/%3E%3C/svg%3E') no-repeat 0 0/100% 100%}
+  .moon u{position:absolute;left:72%;top:13%;width:11%;height:11%;border-radius:50%;background:#eafcff;box-shadow:0 0 8px rgba(234,252,255,.9);animation:tw 3s ease-in-out infinite}
+  @keyframes tw{0%,100%{opacity:.4}50%{opacity:1}}
+
+  /* ---------- chrome ---------- */
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  nav{position:fixed;top:0;left:0;right:0;z-index:50;backdrop-filter:blur(22px) saturate(130%);background:color-mix(in srgb,var(--surface) 55%,transparent);border-bottom:1px solid var(--line)}
+  .navin{display:flex;align-items:center;gap:26px;height:62px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.4px}
+  .navlinks{display:flex;gap:22px;margin-left:auto;font-size:13.5px;color:var(--muted)}
+  .navlinks a:hover{color:var(--text)}
+  .btn{display:inline-flex;align-items:center;gap:9px;padding:11px 20px;border-radius:14px;font-weight:600;font-size:14px;color:#fff;
+    background:linear-gradient(135deg,var(--c1),var(--c2) 55%,var(--c3));box-shadow:0 8px 26px -10px var(--c2);transition:transform .18s,box-shadow .18s;border:none;cursor:pointer}
+  .btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 14px 34px -10px var(--c2)}
+  .btn.small{padding:8px 15px;font-size:13px;border-radius:11px}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line-strong);box-shadow:none}
+  .btn.ghost:hover{color:var(--text);border-color:var(--text)}
+
+  /* ---------- hero ---------- */
+  header{padding:150px 0 70px;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+  .kicker{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-strong);border-radius:99px;padding:6px 14px;font-size:12.5px;color:var(--muted);margin-bottom:22px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--online);box-shadow:0 0 10px var(--online)}
+  h1{font-family:var(--display);font-size:clamp(42px,6vw,68px);line-height:1.04;letter-spacing:-1.5px;font-weight:700}
+  .sub{margin:22px 0 30px;font-size:17px;line-height:1.7;color:var(--muted);max-width:34rem}
+  .cta{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .meta{margin-top:26px;display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--faint)}
+  .meta b{color:var(--muted);font-weight:600}
+
+  /* ---------- app mockup ---------- */
+  .mock{border-radius:22px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 72%,transparent);
+    backdrop-filter:blur(28px);box-shadow:0 40px 90px -40px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.03),0 30px 80px -50px var(--c2);overflow:hidden;transform:rotate3d(1,-1,0,4deg);transition:transform .5s}
+  .mock:hover{transform:rotate3d(0,0,0,0deg)}
+  .mtitle{display:flex;align-items:center;gap:9px;padding:11px 16px;border-bottom:1px solid var(--line);font-family:var(--display);font-size:13px;font-weight:600}
+  .mdots{margin-left:auto;display:flex;gap:6px}
+  .mdots span{width:9px;height:9px;border-radius:50%;background:var(--line-strong)}
+  .mbody{display:flex;min-height:340px}
+  .mrail{width:52px;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px 0}
+  .mrail span{width:26px;height:26px;border-radius:9px;background:var(--line)}
+  .mrail span.on{background:color-mix(in srgb,var(--accent) 35%,transparent);box-shadow:0 0 12px -2px var(--accent)}
+  .mchat{flex:1;display:flex;flex-direction:column;padding:16px 18px;gap:9px}
+  .mhead{display:flex;align-items:center;gap:10px;padding-bottom:11px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .mava{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--c2),var(--c3));position:relative}
+  .mava::after{content:"";position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;background:var(--online);border:2px solid var(--surface)}
+  .mname{font-size:13px;font-weight:600}
+  .mstat{font-size:10.5px;color:var(--online)}
+  .bub{max-width:75%;padding:9px 13px;border-radius:var(--rb);font-size:12.5px;line-height:1.55;opacity:0;transform:translateY(8px) scale(.96);transition:opacity .4s,transform .4s}
+  .bub.show{opacity:1;transform:none}
+  .bub.them{align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid var(--line);border-bottom-left-radius:6px}
+  .bub.me{align-self:flex-end;color:#fff;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 92%,#fff),color-mix(in srgb,var(--c2) 88%,#000));border-bottom-right-radius:6px;box-shadow:0 8px 22px -12px var(--c2)}
+  .ticks{font-size:9px;opacity:.75;margin-left:8px}
+  .wave{display:inline-flex;align-items:center;gap:2px;height:16px;vertical-align:middle;margin:0 6px}
+  .wave b{width:2.5px;border-radius:2px;background:var(--c1);display:inline-block}
+  .typing{display:inline-flex;gap:4px;align-items:center}
+  .typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:ty 1s ease-in-out infinite}
+  .typing i:nth-child(2){animation-delay:.16s}.typing i:nth-child(3){animation-delay:.32s}
+  @keyframes ty{0%,100%{transform:none;opacity:.5}50%{transform:translateY(-4px);opacity:1}}
+
+  /* ---------- sections ---------- */
+  section{padding:88px 0}
+  .stitle{font-family:var(--display);font-size:clamp(28px,3.6vw,40px);letter-spacing:-.8px;font-weight:700;margin-bottom:12px}
+  .sdesc{color:var(--muted);max-width:36rem;line-height:1.7;margin-bottom:44px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .card{border:1px solid var(--line);border-radius:20px;padding:22px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));backdrop-filter:blur(18px);transition:transform .25s,border-color .25s}
+  .card:hover{transform:translateY(-4px);border-color:var(--line-strong)}
+  .chip{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:19px;margin-bottom:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--c1) 22%,transparent),color-mix(in srgb,var(--c3) 22%,transparent));border:1px solid var(--line-strong)}
+  .card h3{font-family:var(--display);font-size:16px;margin-bottom:7px}
+  .card p{font-size:13.5px;color:var(--muted);line-height:1.65}
+
+  /* experiences */
+  .exps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .exp{border:1px solid var(--line);border-radius:22px;padding:20px;cursor:pointer;background:rgba(255,255,255,.02);transition:transform .25s,border-color .25s;text-align:left}
+  .exp:hover{transform:translateY(-5px)}
+  .exp.on{border-color:color-mix(in srgb,var(--accent) 70%,transparent);box-shadow:0 14px 40px -18px var(--accent)}
+  .swatch{height:84px;border-radius:15px;margin-bottom:16px;position:relative;overflow:hidden}
+  .exp h3{font-family:var(--display);font-size:17px}
+  .exp p{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.6}
+  .exp .tag{float:right;font-size:10.5px;color:var(--faint);border:1px solid var(--line);padding:3px 9px;border-radius:99px;margin-top:2px}
+
+  /* privacy steps */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;counter-reset:st}
+  .step{position:relative;border:1px solid var(--line);border-radius:20px;padding:26px 22px 22px;background:rgba(255,255,255,.025)}
+  .step::before{counter-increment:st;content:"0" counter(st);position:absolute;top:18px;right:20px;font-family:var(--display);font-size:26px;font-weight:700;opacity:.14}
+  .step h3{font-family:var(--display);font-size:15.5px;margin-bottom:8px}
+  .step p{font-size:13px;color:var(--muted);line-height:1.65}
+
+  /* mobile */
+  .mobile{display:grid;grid-template-columns:1fr .8fr;gap:52px;align-items:center}
+  .phone{width:210px;height:420px;margin:0 auto;border-radius:34px;border:1px solid var(--line-strong);background:color-mix(in srgb,var(--surface) 80%,transparent);box-shadow:0 40px 80px -40px rgba(0,0,0,.9),0 24px 70px -45px var(--c2);position:relative;overflow:hidden;animation:float 6s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(-2deg)}}
+  .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:74px;height:18px;border-radius:99px;background:rgba(0,0,0,.55);border:1px solid var(--line)}
+  .pscreen{position:absolute;inset:12px;border-radius:24px;background:linear-gradient(180deg,color-mix(in srgb,var(--c2) 16%,var(--ink)),var(--ink));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+  .soon{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
+  ul.road{list-style:none;display:grid;gap:13px;margin-top:26px}
+  ul.road li{display:flex;gap:12px;align-items:flex-start;font-size:14px;color:var(--muted);line-height:1.6}
+  ul.road li b{color:var(--text);font-weight:600}
+  .pin{flex:none;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:11px;background:linear-gradient(135deg,color-mix(in srgb,var(--c1) 25%,transparent),color-mix(in srgb,var(--c3) 25%,transparent));border:1px solid var(--line-strong)}
+
+  /* creator */
+  .creator{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px;align-items:center}
+  .pics{position:relative;height:380px}
+  .pic{position:absolute;width:240px;border-radius:20px;border:1px solid var(--line-strong);box-shadow:0 30px 70px -30px rgba(0,0,0,.95);overflow:hidden;transition:transform .35s}
+  .pic img{display:block;width:100%;height:300px;object-fit:cover}
+  .pic:first-child{left:4%;top:6%;transform:rotate(-6deg);z-index:1}
+  .pic:last-child{right:4%;bottom:0;transform:rotate(5deg)}
+  .pic:hover{transform:rotate(0) scale(1.05);z-index:3}
+  .role{color:var(--accent);font-size:13.5px;font-weight:600;letter-spacing:.4px;margin:10px 0 16px}
+  .creator p.bio{color:var(--muted);line-height:1.75;font-size:15px}
+
+  /* download / footer */
+  .dl{text-align:center;border:1px solid var(--line);border-radius:28px;padding:64px 30px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));backdrop-filter:blur(20px);position:relative;overflow:hidden}
+  .dl::before{content:"";position:absolute;inset:-40%;background:radial-gradient(circle at 50% 120%,color-mix(in srgb,var(--c2) 22%,transparent),transparent 55%)}
+  .dl>*{position:relative}
+  .note{margin-top:18px;font-size:12.5px;color:var(--faint);line-height:1.7}
+  footer{border-top:1px solid var(--line);padding:34px 0;margin-top:40px}
+  .fin{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--faint)}
+  .fin .sp{margin-left:auto}
+
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s}
+  .reveal.in{opacity:1;transform:none}
+
+  @media (max-width:900px){
+    header{grid-template-columns:1fr;padding-top:120px}
+    .mock{transform:none}
+    .exps,.steps{grid-template-columns:1fr}
+    .mobile,.creator{grid-template-columns:1fr}
+    .navlinks{display:none}
+    .pics{height:320px}.pic{width:190px}.pic img{height:240px}
+  }
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="grid-floor"></div>
+  <div class="glow" id="glow"></div>
+  <div class="vignette"></div>
+</div>
+
+<nav>
+  <div class="wrap navin">
+    <a class="brand" href="#top"><span class="moon" style="width:26px;height:26px"><i></i><u></u></span> Nyx</a>
+    <div class="navlinks">
+      <a href="#features">Features</a>
+      <a href="#experiences">Experiences</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#mobile">Mobile</a>
+      <a href="#creator">Creator</a>
+    </div>
+    <a class="btn small" href="https://github.com/FlinnZee/Nyx/releases/latest" id="dl-nav">⬇ Download</a>
+  </div>
+</nav>
+
+<div class="wrap" id="top">
+
+  <header>
+    <div>
+      <span class="kicker"><span class="dot"></span> v0.3.0 · Private Circles · Windows</span>
+      <h1>Night,<br/>made <span class="aurora-text">social</span>.</h1>
+      <p class="sub">Nyx is a fluid, futuristic messaging experience — private circles, real voice &amp; video calls, and media that lives on <em>your</em> device, wrapped in living aurora light.</p>
+      <div class="cta">
+        <a class="btn" href="https://github.com/FlinnZee/Nyx/releases/latest" id="dl-hero">⬇ Download for Windows</a>
+        <a class="btn ghost" href="#features">Explore Nyx</a>
+      </div>
+      <div class="meta">
+        <span><b>~4 MB</b> installer</span>
+        <span><b>Invite-only</b> circles</span>
+        <span><b>3</b> complete experiences</span>
+        <span><b>Mobile</b> coming soon</span>
+      </div>
+    </div>
+
+    <div class="mock" id="mock">
+      <div class="mtitle"><span class="moon" style="width:17px;height:17px"><i></i><u></u></span> Nyx <div class="mdots"><span></span><span></span><span></span></div></div>
+      <div class="mbody">
+        <div class="mrail"><span class="on"></span><span></span><span></span><span></span></div>
+        <div class="mchat">
+          <div class="mhead"><div class="mava"></div><div><div class="mname">Aria Vale</div><div class="mstat">Active now</div></div></div>
+          <div class="bub them" data-d="400">have you tried the new themes? 👀</div>
+          <div class="bub me" data-d="1400">vortex goes hard. full neon grid ⚡ <span class="ticks">✓✓</span></div>
+          <div class="bub them" data-d="2600">sending you a voice note
+            <span class="wave"><b style="height:6px"></b><b style="height:13px"></b><b style="height:9px"></b><b style="height:15px"></b><b style="height:7px"></b><b style="height:12px"></b><b style="height:5px"></b></span>0:06
+          </div>
+          <div class="bub me" data-d="3900">this app really feels alive ✨ <span class="ticks">✓✓</span></div>
+          <div class="bub them" data-d="5000"><span class="typing"><i></i><i></i><i></i></span></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="features">
+    <h2 class="stitle reveal">Everything a messenger should be.<br/><span class="aurora-text">And how it should feel.</span></h2>
+    <p class="sdesc reveal">Every interaction in Nyx is built twice — once to work flawlessly, once to feel fluid. Spring physics, glass surfaces and light that follows you.</p>
+    <div class="cards">
+      <div class="card reveal"><div class="chip">💬</div><h3>Living conversations</h3><p>Real-time messaging with sent / delivered / seen ticks, live typing indicators and presence that breathes.</p></div>
+      <div class="card reveal"><div class="chip">📞</div><h3>Voice &amp; video calls</h3><p>Full-screen, peer-to-peer calls with a cinematic in-call experience — mute, camera and speaker at your fingertips.</p></div>
+      <div class="card reveal"><div class="chip">🎙️</div><h3>Voice notes</h3><p>Record with a live waveform, scrub through playback. Your voice, beautifully drawn.</p></div>
+      <div class="card reveal"><div class="chip">🔒</div><h3>Private circles</h3><p>No public directory. Find friends only by exact @handle, connect through requests, join by invite code.</p></div>
+      <div class="card reveal"><div class="chip">📱</div><h3>Media stays yours</h3><p>Photos, files and voice notes live on your devices. The server relays them once — then forgets, forever.</p></div>
+      <div class="card reveal"><div class="chip">👥</div><h3>Groups</h3><p>Bring the whole circle together with named groups, member lists and per-person message colours.</p></div>
+      <div class="card reveal"><div class="chip">🔔</div><h3>Always reachable</h3><p>System notifications when you're away, and a tray presence that keeps Nyx quietly alive.</p></div>
+      <div class="card reveal"><div class="chip">🪶</div><h3>Impossibly light</h3><p>A native, compiled core. The entire experience installs from ~4 MB and starts in a blink.</p></div>
+    </div>
+  </section>
+
+  <section id="experiences">
+    <h2 class="stitle reveal">One app. <span class="aurora-text">Three worlds.</span></h2>
+    <p class="sdesc reveal">Nyx ships with three complete experiences — not color swaps, whole moods. Fonts, motion, light and shape all transform. <b style="color:var(--text)">Tap one — this page will follow.</b></p>
+    <div class="exps">
+      <button class="exp on" data-set="aurora">
+        <div class="swatch" style="background:linear-gradient(135deg,#3ce7ff,#8b5cf6 55%,#ff5fa2)"></div>
+        <h3>Midnight Aurora <span class="tag">signature</span></h3>
+        <p>Deep ink &amp; drifting aurora light. The soul of Nyx — elegant, calm, alive.</p>
+      </button>
+      <button class="exp" data-set="vortex">
+        <div class="swatch" style="background:linear-gradient(135deg,#00ff9f,#00cfff 55%,#ff2d78)"></div>
+        <h3>Vortex <span class="tag">for the bold</span></h3>
+        <p>Neon-grid cyber energy. Scanlines, sharp edges and gaming-grade glow.</p>
+      </button>
+      <button class="exp" data-set="bloom">
+        <div class="swatch" style="background:linear-gradient(135deg,#ff9ecb,#c9a2ff 55%,#ffc998)"></div>
+        <h3>Bloom <span class="tag">for the dreamy</span></h3>
+        <p>Pastel bokeh and soft round warmth. Gentle, pretty, glowing from within.</p>
+      </button>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <h2 class="stitle reveal">Built <span class="aurora-text">private-first.</span></h2>
+    <p class="sdesc reveal">Nyx treats your data the way the best messengers do — and goes further with media.</p>
+    <div class="steps">
+      <div class="step reveal"><h3>🚪 Invite-only</h3><p>There is no open sign-up. Every member enters with a one-time invite code minted by someone already inside.</p></div>
+      <div class="step reveal"><h3>🕵️ Undiscoverable</h3><p>No browsing, no suggestions, no directory. You exist only to the people who know your exact @handle — and whom you accept.</p></div>
+      <div class="step reveal"><h3>💨 Relay &amp; forget</h3><p>Media is relayed just long enough to reach your friend's device, then destroyed on the server. History lives with you.</p></div>
+    </div>
+  </section>
+
+  <section id="mobile">
+    <div class="mobile">
+      <div>
+        <h2 class="stitle reveal">Coming to your <span class="aurora-text">pocket.</span></h2>
+        <p class="sdesc reveal" style="margin-bottom:0">The same core that powers Nyx on Windows is mobile-ready by design. iOS and Android builds are next on the bench.</p>
+        <ul class="road">
+          <li class="reveal"><span class="pin">📱</span><span><b>iOS &amp; Android</b> — the full Nyx experience, one codebase, native performance.</span></li>
+          <li class="reveal"><span class="pin">🔊</span><span><b>Call relay</b> — calls that connect on every network, everywhere.</span></li>
+          <li class="reveal"><span class="pin">🔄</span><span><b>Auto-updates</b> — new releases arrive silently, no reinstalling.</span></li>
+        </ul>
+      </div>
+      <div class="phone reveal">
+        <div class="notch"></div>
+        <div class="pscreen">
+          <span class="moon" style="width:54px;height:54px"><i></i><u></u></span>
+          <div class="display aurora-text" style="font-size:22px;font-weight:700">Nyx</div>
+          <span class="soon">Coming soon</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="creator">
+    <div class="creator">
+      <div class="pics reveal">
+        <div class="pic"><img src="assets/creator-1.jpg" alt="TK NiRMAL" /></div>
+        <div class="pic"><img src="assets/creator-2.jpg" alt="TK NiRMAL" style="object-position:50% 30%" /></div>
+      </div>
+      <div>
+        <h2 class="stitle reveal">The mind behind <span class="aurora-text">the night.</span></h2>
+        <div class="role reveal">TK NiRMAL · dr.v0id — Creator, Designer &amp; Developer</div>
+        <p class="bio reveal">Nyx is designed and built end-to-end by one person — every gradient, every spring animation, every line of the engine underneath. It began as a simple idea: a messenger shouldn't just work, it should <em>feel</em> like something. Something alive, personal and yours.</p>
+        <p class="bio reveal" style="margin-top:14px">This is only the first light. The circle grows from here — mobile, calls everywhere, and experiences no other messenger will have.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="download">
+    <div class="dl reveal">
+      <span class="moon" style="width:58px;height:58px"><i></i><u></u></span>
+      <h2 class="stitle" style="margin-top:18px">Step into the <span class="aurora-text">night.</span></h2>
+      <p class="sdesc" style="margin:0 auto 30px">Nyx 0.3.0 for Windows — free for the circle. You'll need an invite code from a member.</p>
+      <a class="btn" style="font-size:16px;padding:15px 32px" href="https://github.com/FlinnZee/Nyx/releases/latest" id="dl-main">⬇ Download Nyx for Windows</a>
+      <p class="note">Unsigned early build — if Windows SmartScreen appears, choose <b>More info → Run anyway</b>.<br/>By downloading you accept this is pre-release software. All rights reserved.</p>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap fin">
+    <span class="moon" style="width:18px;height:18px"><i></i><u></u></span>
+    <span>© 2026 <b style="color:var(--muted)">TK NiRMAL (dr.v0id)</b>. All rights reserved.</span>
+    <span class="sp">Nyx — night made social · <a href="https://github.com/FlinnZee/Nyx" style="color:var(--muted)">Source (view-only)</a></span>
+  </div>
+</footer>
+
+<script>
+  // Cursor-trailing glow, like the app.
+  const glow = document.getElementById('glow');
+  let gx = -999, gy = -999, cx = gx, cy = gy;
+  addEventListener('pointermove', e => { gx = e.clientX; gy = e.clientY; });
+  (function loop(){
+    cx += (gx - cx) * .08; cy += (gy - cy) * .08;
+    glow.style.background = `radial-gradient(520px circle at ${cx}px ${cy}px, color-mix(in srgb, var(--accent) 12%, transparent), transparent 62%)`;
+    requestAnimationFrame(loop);
+  })();
+
+  // Experience switcher — the whole page transforms.
+  const exps = document.querySelectorAll('.exp');
+  function setTheme(t){
+    document.documentElement.dataset.theme = t;
+    exps.forEach(b => b.classList.toggle('on', b.dataset.set === t));
+    localStorage.setItem('nyx.site.theme', t);
+  }
+  exps.forEach(b => b.addEventListener('click', () => setTheme(b.dataset.set)));
+  setTheme(localStorage.getItem('nyx.site.theme') || 'aurora');
+
+  // Chat mockup: bubbles appear in a loop.
+  const bubs = [...document.querySelectorAll('.bub')];
+  function playMock(){
+    bubs.forEach(b => b.classList.remove('show'));
+    bubs.forEach(b => setTimeout(() => b.classList.add('show'), +b.dataset.d));
+  }
+  playMock();
+  setInterval(playMock, 8200);
+
+  // Reveal on scroll.
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { threshold: .12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

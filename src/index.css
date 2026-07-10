@@ -1,0 +1,276 @@
+/* Self-hosted fonts (offline-safe for the desktop build) */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
+@import "@fontsource/orbitron/500.css";
+@import "@fontsource/orbitron/700.css";
+@import "@fontsource/comfortaa/400.css";
+@import "@fontsource/comfortaa/700.css";
+
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/*  Nyx — "Midnight Aurora" design tokens                             */
+/* ------------------------------------------------------------------ */
+@theme {
+  --color-ink: #07070d;
+  --color-ink-2: #0a0a14;
+  --color-surface: #0f0f1c;
+  --color-surface-2: #161628;
+  --color-line: rgba(255, 255, 255, 0.07);
+  --color-line-strong: rgba(255, 255, 255, 0.12);
+
+  --color-text: #ececf5;
+  --color-muted: #9a9ab4;
+  --color-faint: #61617e;
+
+  --color-cyan: #3ce7ff;
+  --color-teal: #2dd4bf;
+  --color-violet: #8b5cf6;
+  --color-magenta: #ff5fa2;
+  --color-accent: #8b7bff;
+  --color-online: #35e6ae;
+  --color-away: #ffb454;
+
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, "Segoe UI", sans-serif;
+
+  --radius-xl2: 1.4rem;
+}
+
+:root {
+  --radius-bubble: 18px;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Experience: VORTEX — neon-grid cyber (gaming)                     */
+/* ------------------------------------------------------------------ */
+:root[data-theme="vortex"] {
+  --color-ink: #030807;
+  --color-ink-2: #04100c;
+  --color-surface: #071510;
+  --color-surface-2: #0a1f17;
+  --color-line: rgba(0, 255, 159, 0.12);
+  --color-line-strong: rgba(0, 255, 159, 0.28);
+
+  --color-text: #e8fff5;
+  --color-muted: #8fb8a8;
+  --color-faint: #56776a;
+
+  --color-cyan: #00ff9f;
+  --color-violet: #00cfff;
+  --color-magenta: #ff2d78;
+  --color-accent: #00ff9f;
+  --color-online: #39ff14;
+  --color-away: #ffe14d;
+
+  --font-display: "Orbitron", "Space Grotesk", system-ui, sans-serif;
+  --radius-bubble: 8px;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Experience: BLOOM — dreamy pastel glow                            */
+/* ------------------------------------------------------------------ */
+:root[data-theme="bloom"] {
+  --color-ink: #171019;
+  --color-ink-2: #1d1420;
+  --color-surface: #241826;
+  --color-surface-2: #2e1f30;
+  --color-line: rgba(255, 190, 220, 0.13);
+  --color-line-strong: rgba(255, 190, 220, 0.28);
+
+  --color-text: #fdf0f7;
+  --color-muted: #c3a3b6;
+  --color-faint: #8a6d80;
+
+  --color-cyan: #ff9ecb;
+  --color-violet: #c9a2ff;
+  --color-magenta: #ffc998;
+  --color-accent: #ff8fc4;
+  --color-online: #7ef0c3;
+  --color-away: #ffd08a;
+
+  --font-display: "Comfortaa", "Space Grotesk", system-ui, sans-serif;
+  --radius-bubble: 26px;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Base                                                              */
+/* ------------------------------------------------------------------ */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow: hidden; /* app owns its own scroll regions */
+  user-select: none;
+}
+
+/* Chrome is non-selectable, but let people type and copy real content. */
+input,
+textarea {
+  user-select: text;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-violet) 45%, transparent);
+  color: #fff;
+}
+
+/* Slim, ghostly scrollbars */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+.scroll-slim::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 99px;
+}
+.scroll-slim::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Surfaces & effects                                                */
+/* ------------------------------------------------------------------ */
+.glass {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.02)
+  );
+  backdrop-filter: blur(22px) saturate(120%);
+  border: 1px solid var(--color-line);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 20px 50px -30px rgba(0, 0, 0, 0.9);
+}
+
+.glass-panel {
+  background: color-mix(in srgb, var(--color-surface) 62%, transparent);
+  backdrop-filter: blur(30px) saturate(130%);
+  border: 1px solid var(--color-line);
+}
+
+.nyx-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-line);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.6rem 0.85rem;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text);
+  transition: border-color 0.2s, background 0.2s;
+}
+.nyx-input::placeholder {
+  color: var(--color-faint);
+}
+.nyx-input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.aurora-text {
+  background: linear-gradient(
+    100deg,
+    var(--color-cyan),
+    var(--color-violet) 45%,
+    var(--color-magenta)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ring-focus:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 70%, transparent);
+}
+
+/* Signature soft glow used behind active / accent elements */
+.glow-accent {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 40%, transparent),
+    0 8px 30px -8px color-mix(in srgb, var(--color-accent) 55%, transparent);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Keyframes                                                         */
+/* ------------------------------------------------------------------ */
+@keyframes aurora-drift-a {
+  0% { transform: translate(-8%, -6%) scale(1); }
+  50% { transform: translate(10%, 8%) scale(1.25); }
+  100% { transform: translate(-8%, -6%) scale(1); }
+}
+@keyframes aurora-drift-b {
+  0% { transform: translate(6%, 4%) scale(1.1); }
+  50% { transform: translate(-12%, -10%) scale(0.9); }
+  100% { transform: translate(6%, 4%) scale(1.1); }
+}
+@keyframes aurora-drift-c {
+  0% { transform: translate(0%, 10%) scale(1); }
+  50% { transform: translate(8%, -8%) scale(1.2); }
+  100% { transform: translate(0%, 10%) scale(1); }
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.7); opacity: 0.7; }
+  70% { transform: scale(2.2); opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+@keyframes grid-scroll {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 46px; }
+}
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+@keyframes bokeh-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(4%, -6%) scale(1.12); }
+  66% { transform: translate(-5%, 4%) scale(0.92); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.8; }
+}
