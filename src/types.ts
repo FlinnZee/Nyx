@@ -125,6 +125,7 @@ export interface Preferences {
   sendOnEnter: boolean;
   notifications: boolean;
   sounds: boolean;
+  haptics: boolean;
   readReceipts: boolean;
   showPresence: boolean;
   enterToSend: boolean;

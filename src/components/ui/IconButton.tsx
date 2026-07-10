@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
+import { tapHaptic } from "../../lib/haptics";
 
 export default function IconButton({
   children,
@@ -22,7 +23,10 @@ export default function IconButton({
       type="button"
       title={title}
       aria-label={title}
-      onClick={onClick}
+      onClick={() => {
+        tapHaptic();
+        onClick?.();
+      }}
       whileTap={{ scale: 0.9 }}
       whileHover={{ scale: 1.06 }}
       transition={{ type: "spring", stiffness: 500, damping: 24 }}

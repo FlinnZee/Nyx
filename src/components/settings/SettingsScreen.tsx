@@ -5,6 +5,7 @@ import {
   Bell,
   ShieldCheck,
   MessageSquare,
+  MonitorSmartphone,
   Info,
 } from "lucide-react";
 import type { AccentName, ThemeName } from "../../types";
@@ -14,12 +15,14 @@ import { ACCENTS } from "../../lib/accents";
 import { THEMES } from "../../lib/theme";
 import Toggle from "../ui/Toggle";
 import AboutPanel from "./AboutPanel";
+import DevicesPanel from "./DevicesPanel";
 
 const nav = [
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "privacy", label: "Privacy", icon: ShieldCheck },
   { id: "chat", label: "Chat", icon: MessageSquare },
+  { id: "devices", label: "Devices", icon: MonitorSmartphone },
   { id: "about", label: "About", icon: Info },
 ];
 
@@ -28,24 +31,24 @@ export default function SettingsScreen() {
   const setPanel = useUIStore((s) => s.setSettingsPanel);
 
   return (
-    <section className="flex flex-1">
-      <div className="w-56 shrink-0 border-r border-line p-3">
+    <section className="flex min-h-0 flex-1 flex-col md:flex-row">
+      <div className="shrink-0 p-3 md:w-56 md:border-r md:border-line">
         <h1 className="px-3 py-3 font-display text-[22px] font-bold tracking-tight">Settings</h1>
-        <div className="space-y-0.5">
+        <div className="scroll-slim flex gap-1 overflow-x-auto pb-1 md:flex-col md:space-y-0.5 md:overflow-visible md:pb-0">
           {nav.map((n) => {
             const active = panel === n.id;
             return (
-              <button key={n.id} type="button" onClick={() => setPanel(n.id)} className="relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm">
+              <button key={n.id} type="button" onClick={() => setPanel(n.id)} className="relative flex shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-sm md:w-full md:gap-3">
                 {active && <motion.span layoutId="settings-active" className="absolute inset-0 rounded-xl border border-line-strong bg-white/[0.06]" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
                 <n.icon size={17} className={"relative z-10 " + (active ? "text-accent" : "text-faint")} />
-                <span className={"relative z-10 " + (active ? "text-text" : "text-muted")}>{n.label}</span>
+                <span className={"relative z-10 whitespace-nowrap " + (active ? "text-text" : "text-muted")}>{n.label}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="scroll-slim flex-1 overflow-y-auto px-8 py-8">
+      <div className="scroll-slim flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={panel}
@@ -59,6 +62,7 @@ export default function SettingsScreen() {
             {panel === "notifications" && <Notifications />}
             {panel === "privacy" && <Privacy />}
             {panel === "chat" && <ChatSettings />}
+            {panel === "devices" && <DevicesPanel />}
             {panel === "about" && <AboutPanel />}
           </motion.div>
         </AnimatePresence>
@@ -143,15 +147,19 @@ function Appearance() {
 function Notifications() {
   const notifications = useSettingsStore((s) => s.prefs.notifications);
   const sounds = useSettingsStore((s) => s.prefs.sounds);
+  const haptics = useSettingsStore((s) => s.prefs.haptics);
   const setPref = useSettingsStore((s) => s.setPref);
   return (
     <>
-      <PanelTitle title="Notifications" desc="Choose what reaches you." />
+      <PanelTitle title="Notifications" desc="Choose what reaches you — and how it feels." />
       <Row title="Push notifications" desc="Get notified about new messages.">
         <Toggle checked={notifications} onChange={(v) => setPref("notifications", v)} />
       </Row>
       <Row title="In-app sounds" desc="Play a chime on send & receive.">
         <Toggle checked={sounds} onChange={(v) => setPref("sounds", v)} />
+      </Row>
+      <Row title="Haptics" desc="Gentle vibrations on taps, sends and calls (mobile).">
+        <Toggle checked={haptics} onChange={(v) => setPref("haptics", v)} />
       </Row>
     </>
   );

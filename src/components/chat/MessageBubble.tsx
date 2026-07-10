@@ -20,6 +20,7 @@ import { clock, fileSize } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import { useChatStore } from "../../store/useChatStore";
 import { useUIStore } from "../../store/useUIStore";
+import { tapHaptic } from "../../lib/haptics";
 import { ME } from "../../data/mock";
 import { useCachedMedia } from "../../hooks/useCachedMedia";
 import VoiceMessage from "./VoiceMessage";
@@ -65,6 +66,7 @@ export default function MessageBubble({
   const media = useCachedMedia(message);
 
   const addReaction = (emoji: string) => {
+    tapHaptic();
     react(message.conversationId, message.id, emoji);
     setBar(false);
   };

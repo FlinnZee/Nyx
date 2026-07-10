@@ -1,4 +1,5 @@
 import { useSettingsStore } from "../store/useSettingsStore";
+import { confirmHaptic, receiveHaptic } from "./haptics";
 
 let ctx: AudioContext | null = null;
 function audio(): AudioContext | null {
@@ -36,7 +37,9 @@ function enabled() {
 
 export function playSend() {
   if (enabled()) blip([680, 920]);
+  confirmHaptic();
 }
 export function playReceive() {
   if (enabled()) blip([520, 400]);
+  receiveHaptic();
 }

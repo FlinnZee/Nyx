@@ -88,7 +88,10 @@ export default function Composer({ convId }: { convId: string }) {
     : "";
 
   return (
-    <div className="px-6 pb-5 pt-2">
+    <div
+      className="px-3 pb-4 pt-2 md:px-6 md:pb-5"
+      style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+    >
       <div className="relative mx-auto max-w-3xl">
         <AnimatePresence>
           {replying && (

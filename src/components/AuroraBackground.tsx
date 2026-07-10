@@ -54,6 +54,22 @@ export default function AuroraBackground() {
 function AuroraScene() {
   return (
     <>
+      {/* Shooting stars */}
+      {[{ top: "12%", right: "8%", dur: "9s", delay: "0s" }, { top: "30%", right: "-4%", dur: "13s", delay: "5s" }].map(
+        (s, i) => (
+          <span
+            key={i}
+            className="absolute h-[2px] w-32 origin-right rounded-full"
+            style={{
+              top: s.top,
+              right: s.right,
+              background: "linear-gradient(90deg, transparent, #eafcff)",
+              boxShadow: "0 0 12px rgba(234,252,255,0.7)",
+              animation: `shooting-star ${s.dur} ease-in ${s.delay} infinite`,
+            }}
+          />
+        ),
+      )}
       <div
         className="absolute -left-[15%] -top-[20%] h-[65vh] w-[65vh] rounded-full opacity-70 blur-[110px]"
         style={{
@@ -128,6 +144,23 @@ function VortexScene() {
             "repeating-linear-gradient(0deg, rgba(0,255,159,0.5) 0 1px, transparent 1px 4px)",
         }}
       />
+      {/* Pulsing target rings */}
+      {[{ left: "12%", top: "22%", size: "16vh", delay: "0s" }, { left: "78%", top: "55%", size: "22vh", delay: "1.4s" }].map(
+        (r, i) => (
+          <span
+            key={i}
+            className="absolute rounded-full border"
+            style={{
+              left: r.left,
+              top: r.top,
+              width: r.size,
+              height: r.size,
+              borderColor: "rgba(0,255,159,0.5)",
+              animation: `neon-pulse 3.4s ease-in-out ${r.delay} infinite`,
+            }}
+          />
+        ),
+      )}
     </>
   );
 }
@@ -174,6 +207,23 @@ function BloomScene() {
             top: d.top,
             animation: `twinkle ${d.dur} ease-in-out infinite`,
             animationDelay: d.delay,
+          }}
+        />
+      ))}
+      {/* Falling petals */}
+      {[
+        { left: "18%", dur: "17s", delay: "0s", c: "rgba(255,158,203,0.7)" },
+        { left: "52%", dur: "22s", delay: "-8s", c: "rgba(201,162,255,0.6)" },
+        { left: "80%", dur: "19s", delay: "-13s", c: "rgba(255,201,152,0.65)" },
+      ].map((p, i) => (
+        <span
+          key={`petal-${i}`}
+          className="absolute top-0 h-3 w-2.5"
+          style={{
+            left: p.left,
+            background: p.c,
+            borderRadius: "80% 10% 80% 10%",
+            animation: `petal-fall ${p.dur} linear ${p.delay} infinite`,
           }}
         />
       ))}

@@ -15,6 +15,10 @@ dist-ssr
 # Local environment (Supabase keys)
 .env
 
+# Android signing (local only)
+src-tauri/gen/android/keystore.properties
+*.keystore
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -25,3 +29,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# APK artifacts belong in releases, not history
+*.apk

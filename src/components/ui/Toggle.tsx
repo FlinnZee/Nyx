@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { tapHaptic } from "../../lib/haptics";
 
 export default function Toggle({
   checked,
@@ -12,7 +13,10 @@ export default function Toggle({
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
+      onClick={() => {
+        tapHaptic();
+        onChange(!checked);
+      }}
       className="ring-focus relative h-[26px] w-[46px] shrink-0 rounded-full p-[3px] transition-colors duration-300"
       style={{
         background: checked

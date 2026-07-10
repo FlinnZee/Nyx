@@ -5,6 +5,7 @@ import { callLog as seedLog } from "../data/mock";
 import { uid } from "../lib/format";
 import { supabase } from "../lib/supabase";
 import { useUIStore } from "./useUIStore";
+import { alertHaptic } from "../lib/haptics";
 import { fetchCalls, insertCall, subscribeCalls, toCall } from "../lib/chatApi";
 
 const ICE: RTCConfiguration = {
@@ -173,6 +174,7 @@ export const useCallStore = create<CallState>((set, get) => {
         }
         wasIncoming = true;
         pendingOffer = sig;
+        alertHaptic();
         set({
           active: {
             contactId: sig.from,

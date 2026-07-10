@@ -7,10 +7,13 @@ interface UIState {
   selectedContactId: string | null;
   splashDone: boolean;
   toast: string | null;
+  /** Mobile stacked navigation: list of chats vs an open chat. */
+  mobileView: "list" | "chat";
 
   setSection: (s: Section) => void;
   setSettingsPanel: (p: string) => void;
   setSelectedContact: (id: string | null) => void;
+  setMobileView: (v: "list" | "chat") => void;
   finishSplash: () => void;
   showToast: (msg: string) => void;
 }
@@ -23,8 +26,10 @@ export const useUIStore = create<UIState>((set) => ({
   selectedContactId: null,
   splashDone: false,
   toast: null,
+  mobileView: "list",
 
   setSection: (section) => set({ section }),
+  setMobileView: (mobileView) => set({ mobileView }),
   setSettingsPanel: (settingsPanel) => set({ settingsPanel }),
   setSelectedContact: (selectedContactId) => set({ selectedContactId }),
   finishSplash: () => set({ splashDone: true }),

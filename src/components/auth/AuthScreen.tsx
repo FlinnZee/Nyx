@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { MailCheck } from "lucide-react";
+import { MailCheck, QrCode } from "lucide-react";
 import { useAuthStore } from "../../store/useAuthStore";
 import AuthShell from "./AuthShell";
+import LinkDeviceQR from "./LinkDeviceQR";
 
 export default function AuthScreen() {
   const signIn = useAuthStore((s) => s.signIn);
@@ -12,7 +13,7 @@ export default function AuthScreen() {
   const error = useAuthStore((s) => s.error);
   const notice = useAuthStore((s) => s.notice);
 
-  const [mode, setMode] = useState<"in" | "up">("in");
+  const [mode, setMode] = useState<"in" | "up" | "link">("in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -27,6 +28,23 @@ export default function AuthScreen() {
     if (mode === "in") signIn(email, password);
     else signUp(email, password);
   };
+
+  if (mode === "link") {
+    return (
+      <AuthShell title="Link this device" subtitle="Sign in from another device">
+        <LinkDeviceQR />
+        <div className="mt-5 border-t border-line pt-4 text-center">
+          <button
+            type="button"
+            onClick={() => setMode("in")}
+            className="text-[13px] text-faint transition-colors hover:text-muted"
+          >
+            ← Back to sign in
+          </button>
+        </div>
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
@@ -104,6 +122,14 @@ export default function AuthScreen() {
           Nyx is invite-only — after signing up you'll enter an invite code from a friend.
         </p>
       )}
+
+      <button
+        type="button"
+        onClick={() => setMode("link")}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-line py-2.5 text-[13px] text-muted transition-colors hover:border-line-strong hover:text-text"
+      >
+        <QrCode size={16} /> Link a device
+      </button>
 
       <div className="mt-5 border-t border-line pt-4 text-center">
         <button

@@ -11,6 +11,7 @@ const defaultPrefs: Preferences = {
   sendOnEnter: true,
   notifications: true,
   sounds: true,
+  haptics: true,
   readReceipts: true,
   showPresence: true,
   enterToSend: true,

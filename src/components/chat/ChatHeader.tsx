@@ -9,6 +9,7 @@ import {
   Bell,
   UserRound,
   Users,
+  ArrowLeft,
 } from "lucide-react";
 import type { Contact, Conversation, Presence } from "../../types";
 import Avatar from "../ui/Avatar";
@@ -17,6 +18,8 @@ import Modal from "../ui/Modal";
 import { useCallStore } from "../../store/useCallStore";
 import { useChatStore } from "../../store/useChatStore";
 import { useUIStore } from "../../store/useUIStore";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { tapHaptic } from "../../lib/haptics";
 import { avatarGradient } from "../../lib/format";
 
 const presenceLabel: Record<Presence, string> = {
@@ -39,6 +42,8 @@ export default function ChatHeader({
   const toggleMute = useChatStore((s) => s.toggleMute);
   const contacts = useChatStore((s) => s.contacts);
   const showToast = useUIStore((s) => s.showToast);
+  const setMobileView = useUIStore((s) => s.setMobileView);
+  const mobile = useIsMobile();
   const [menu, setMenu] = useState(false);
   const [details, setDetails] = useState(false);
 
@@ -47,7 +52,19 @@ export default function ChatHeader({
   const memberCount = conversation.memberIds?.length ?? 0;
 
   return (
-    <header className="relative flex h-[68px] shrink-0 items-center gap-3 border-b border-line px-6">
+    <header className="relative flex h-[68px] shrink-0 items-center gap-3 border-b border-line px-3 md:px-6">
+      {mobile && (
+        <IconButton
+          title="Back"
+          size={38}
+          onClick={() => {
+            tapHaptic();
+            setMobileView("list");
+          }}
+        >
+          <ArrowLeft size={20} />
+        </IconButton>
+      )}
       <button
         type="button"
         onClick={() => setDetails(true)}

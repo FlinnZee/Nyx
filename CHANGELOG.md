@@ -2,6 +2,22 @@
 
 All notable changes to Nyx.
 
+## 0.4.0 — Everywhere · 2026-07-10
+
+Nyx leaves the desktop.
+
+### Added
+- **Android app** — the full Nyx experience as a native APK
+- **Nyx Web** — use Nyx from any browser; on iPhone, add it to your Home Screen
+- **Device linking** — sign a new device in by scanning a QR (or typing a 6-char code)
+  from Settings → Devices, WhatsApp-style
+- **Mobile experience** — stacked navigation with a floating glass dock, back-swipe
+  transitions, safe-area aware layout, touch-sized controls
+- **Haptics** — gentle vibrations on taps, sends, receives, reactions and incoming
+  calls, with an on/off switch next to sounds
+- Theme upgrades: shooting stars over Midnight Aurora, pulsing target rings in
+  Vortex, falling petals in Bloom
+
 ## 0.3.1 · 2026-07-10
 
 ### Added

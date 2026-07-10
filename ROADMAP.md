@@ -59,15 +59,18 @@ send/receive, and hydrate conversations/messages from the server.
 - The app checks on launch and updates itself — so friends never re-download an installer.
 - Generate updater signing keys once and keep them safe.
 
-## Step 5 — Mobile (same codebase)
+## Step 5 — Mobile (same codebase) ✅ Android · 🌐 Web · 🍎 iOS pending
 
-Tauri v2 targets iOS and Android from this exact React frontend.
-
-- `npm run tauri android init` / `... ios init`, then build via Android Studio / Xcode.
-- Make the layout **responsive/touch** (the desktop three-pane collapses to stacked views).
-- Native permission prompts handle camera/mic automatically.
-- **Android** is the easier first target: build an APK and sideload it to friends, or use the
-  Play Console ($25 one-time). **iOS** needs a Mac + Apple Developer account ($99/yr).
+- ✅ **Android APK** ships from this repo (`npx tauri android build --apk --target aarch64`;
+  toolchain lives in `D:\.dev\tools`, signing keystore is local-only).
+- ✅ **Nyx Web** — the same app served at `/app/` on the website; on iPhone use
+  Safari → Add to Home Screen. Messaging & calls work in the browser.
+- ✅ Touch-first layout, floating dock navigation, haptics, device-link QR.
+- 🍎 **Native iOS** requires a Mac with Xcode (+ Apple Developer account to
+  distribute). When Mac access exists: `npm run tauri ios init` — the codebase
+  is already mobile-ready.
+- Later: Play Store listing ($25 one-time), FCM push while the app is closed,
+  address-book sync (needs a small native plugin).
 
 ---
 

@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { Search, PenSquare } from "lucide-react";
 import { useChatStore } from "../../store/useChatStore";
+import { useUIStore } from "../../store/useUIStore";
+import { tapHaptic } from "../../lib/haptics";
 import ConversationRow from "./ConversationRow";
 import NewChatModal from "./NewChatModal";
 
@@ -13,7 +15,14 @@ export default function ConversationList() {
   const search = useChatStore((s) => s.search);
   const setActive = useChatStore((s) => s.setActive);
   const setSearch = useChatStore((s) => s.setSearch);
+  const setMobileView = useUIStore((s) => s.setMobileView);
   const [compose, setCompose] = useState(false);
+
+  const open = (id: string) => {
+    tapHaptic();
+    setActive(id);
+    setMobileView("chat");
+  };
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -34,7 +43,7 @@ export default function ConversationList() {
   }, [conversations, contacts, messages, search]);
 
   return (
-    <aside className="flex w-[330px] shrink-0 flex-col border-r border-line">
+    <aside className="flex w-full shrink-0 flex-col md:w-[330px] md:border-r md:border-line">
       <div className="flex items-center justify-between px-5 pb-3 pt-5">
         <h1 className="font-display text-[22px] font-bold tracking-tight">Messages</h1>
         <button
@@ -67,7 +76,7 @@ export default function ConversationList() {
             contact={contact}
             last={last}
             active={conv.id === activeId}
-            onSelect={() => setActive(conv.id)}
+            onSelect={() => open(conv.id)}
           />
         ))}
         {rows.length === 0 && (
