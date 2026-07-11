@@ -77,8 +77,8 @@ export default function ProfileScreen() {
   };
 
   return (
-    <section className="scroll-slim flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-xl px-8 py-8">
+    <section className="scroll-slim w-full min-w-0 flex-1 overflow-y-auto">
+      <div className="mx-auto max-w-xl px-4 py-6 md:px-8 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

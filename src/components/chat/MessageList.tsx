@@ -39,7 +39,7 @@ export default function MessageList({
   }, [visible.length, typing]);
 
   return (
-    <div className="scroll-slim flex-1 overflow-y-auto px-6 py-5">
+    <div className="scroll-slim flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-5">
       <div className="mx-auto flex max-w-3xl flex-col gap-1.5">
         {visible.map((m, i) => {
           const prev = visible[i - 1];

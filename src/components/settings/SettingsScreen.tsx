@@ -31,10 +31,10 @@ export default function SettingsScreen() {
   const setPanel = useUIStore((s) => s.setSettingsPanel);
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col md:flex-row">
-      <div className="shrink-0 p-3 md:w-56 md:border-r md:border-line">
+    <section className="flex min-h-0 w-full min-w-0 flex-1 flex-col md:flex-row">
+      <div className="w-full shrink-0 p-3 md:w-56 md:border-r md:border-line">
         <h1 className="px-3 py-3 font-display text-[22px] font-bold tracking-tight">Settings</h1>
-        <div className="scroll-slim flex gap-1 overflow-x-auto pb-1 md:flex-col md:space-y-0.5 md:overflow-visible md:pb-0">
+        <div className="flex flex-wrap gap-1.5 md:flex-col md:flex-nowrap md:gap-0 md:space-y-0.5">
           {nav.map((n) => {
             const active = panel === n.id;
             return (
@@ -48,7 +48,7 @@ export default function SettingsScreen() {
         </div>
       </div>
 
-      <div className="scroll-slim flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
+      <div className="scroll-slim min-w-0 flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={panel}
@@ -84,29 +84,30 @@ function Appearance() {
 
       <div className="mb-7">
         <div className="mb-3 text-[13px] font-medium text-muted">Experience</div>
-        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {THEMES.map((t) => {
             const active = theme === t.name;
             return (
               <motion.button
                 key={t.name}
                 type="button"
-                whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setPref("theme", t.name as ThemeName)}
                 className={
-                  "rounded-2xl border p-3 text-left transition-colors " +
+                  "flex items-center gap-3 rounded-2xl border p-3 text-left transition-colors sm:flex-col sm:items-stretch " +
                   (active ? "border-accent/70 bg-white/[0.06]" : "border-line hover:border-line-strong")
                 }
               >
                 <span
-                  className="mb-3 block h-16 w-full rounded-xl"
+                  className="block h-14 w-16 shrink-0 rounded-xl sm:mb-3 sm:h-16 sm:w-full"
                   style={{ background: t.preview, boxShadow: active ? "0 6px 20px -8px var(--color-accent)" : "none" }}
                 />
-                <span className={"block font-display text-[14px] font-semibold " + (active ? "text-text" : "text-muted")}>
-                  {t.label}
+                <span className="min-w-0">
+                  <span className={"block font-display text-[14px] font-semibold " + (active ? "text-text" : "text-muted")}>
+                    {t.label}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] leading-snug text-faint">{t.tagline}</span>
                 </span>
-                <span className="mt-0.5 block text-[11px] leading-snug text-faint">{t.tagline}</span>
               </motion.button>
             );
           })}

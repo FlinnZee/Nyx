@@ -26,15 +26,15 @@ export default function CallsScreen() {
   const sorted = [...log].sort((a, b) => b.ts - a.ts);
 
   return (
-    <section className="flex flex-1 flex-col">
-      <div className="flex items-center justify-between px-8 pb-4 pt-7">
+    <section className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
+      <div className="flex items-center justify-between px-4 pb-4 pt-6 md:px-8 md:pt-7">
         <div>
           <h1 className="font-display text-[26px] font-bold tracking-tight">Calls</h1>
           <p className="text-sm text-muted">Your recent voice & video calls</p>
         </div>
       </div>
 
-      <div className="scroll-slim flex-1 overflow-y-auto px-6 pb-6">
+      <div className="scroll-slim flex-1 overflow-y-auto px-3 pb-6 md:px-6">
         <div className="mx-auto max-w-2xl space-y-1">
           {sorted.map((e, i) => {
             const c = contacts[e.contactId];

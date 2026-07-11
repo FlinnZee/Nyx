@@ -77,7 +77,7 @@ function SectionView({ mobile }: { mobile: boolean }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -6 }}
         transition={{ duration: 0.2 }}
-        className="flex min-h-0 flex-1"
+        className="flex min-h-0 w-full min-w-0 flex-1"
       >
         {section === "chats" && <ChatsSection mobile={mobile} />}
         {section === "calls" && <CallsScreen />}
@@ -105,8 +105,8 @@ function AppShell() {
     );
   }
   return (
-    <main className="flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 flex-1">
+    <main className="flex min-h-0 w-full flex-1 flex-col overflow-x-clip">
+      <div className="flex min-h-0 w-full min-w-0 flex-1">
         <SectionView mobile />
       </div>
       {!hideDock && <BottomBar />}

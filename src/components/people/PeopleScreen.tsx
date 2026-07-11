@@ -30,14 +30,14 @@ export default function PeopleScreen() {
   const incoming = requests.filter((r) => r.toId === myId).length;
 
   return (
-    <section className="flex flex-1 flex-col">
-      <div className="flex items-center justify-between gap-4 px-8 pb-4 pt-7">
+    <section className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
+      <div className="flex flex-col gap-4 px-4 pb-4 pt-6 md:flex-row md:items-center md:justify-between md:px-8 md:pt-7">
         <div>
           <h1 className="font-display text-[26px] font-bold tracking-tight">People</h1>
           <p className="text-sm text-muted">Your circle — private by design</p>
         </div>
         {live && (
-          <div className="w-[340px]">
+          <div className="w-full md:w-[340px]">
             <Segmented
               layoutId="people-tabs"
               value={tab}
@@ -52,7 +52,7 @@ export default function PeopleScreen() {
         )}
       </div>
 
-      <div className="scroll-slim flex-1 overflow-y-auto px-8 pb-8">
+      <div className="scroll-slim flex-1 overflow-y-auto px-4 pb-8 md:px-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
@@ -101,7 +101,7 @@ function ContactsTab() {
 
   return (
     <>
-      <div className="mb-4 flex w-64 items-center gap-2 rounded-xl border border-line bg-white/[0.03] px-3 focus-within:border-accent/60">
+      <div className="mb-4 flex w-full items-center gap-2 rounded-xl border border-line bg-white/[0.03] px-3 focus-within:border-accent/60 md:w-64">
         <Search size={16} className="text-faint" />
         <input
           value={q}
@@ -112,13 +112,13 @@ function ContactsTab() {
       </div>
 
       {list.length === 0 ? (
-        <p className="py-14 text-center text-sm text-faint">
+        <p className="mx-auto max-w-xs py-14 text-center text-sm text-faint">
           No contacts yet. Ask a friend for their @handle and add them from the Add tab.
         </p>
       ) : (
         <div
           className="grid gap-3"
-          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}
+          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))" }}
         >
           {list.map((c, i) => (
             <motion.div
